@@ -153,12 +153,37 @@ void display7SEG(int num){
 	}
 }
 
+// clock information
+//ex5, 6, 7
 int hour = 15, minute = 8, second = 50;
+void updateClockBuffer();
+
+//update 7 SEG function prototype
+//ex3, 4, 5, 6, 7
 const int MAX_LED = 4;
 int index_led = 0;
 int led_buffer[4] = {1, 2, 3, 4};
-void updateClockBuffer();
 void update7SEG(int);
+
+//update led matrix function prototype
+// ex9
+const int MAX_LED_MATRIX = 8;
+int index_led_matrix = 0;
+uint8_t matrix_buffer[8] = {0xff, 0xc0, 0x80, 0x37, 0x37, 0x80,
+		0xc0, 0xff};
+void updateLEDMatrix(int);
+
+// binaryArr is used for record binary code of all
+// element in matrix_buffer
+// the last bit (binaryArr[element_matrix_buffer][8]) is to
+//check that the element of matrix buffer is whether be
+//converted to binary or not ?
+uint8_t binaryArr[8][9];
+
+void InitbinaryArr();
+void toBinary(uint8_t, int);
+void setLedMatrix(int);
+
 /* USER CODE END 0 */
 
 /**
@@ -192,7 +217,7 @@ int main(void)
   MX_GPIO_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-  setTimer0(1000);
+  //setTimer0(10);
 
 
   /* USER CODE END 2 */
@@ -202,38 +227,36 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  if(timer0_flag == 1){
-		  setTimer0(1000);
-		  second++;
-		  if(second >= 60){
-			  second = 0;
-			  minute++;
-		  }
+	  //if(timer0_flag == 1){
+		  //setTimer0(10);
+//		  second++;
+//		  if(second >= 60){
+//			  second = 0;
+//			  minute++;
+//		  }
+//
+//		  if(minute >= 60){
+//			  minute = 0;
+//			  hour++;
+//		  }
+//
+//		  if(hour >= 24){
+//			  hour = 0;
+//		  }
+//		  updateClockBuffer();
+//
+//		  // represent four 7seg led
+//		  if(index_led >= MAX_LED) index_led = 0;
+//		  update7SEG(index_led++);
+//
+//		  // toggle dot led
+//		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
 
-		  if(minute >= 60){
-			  minute = 0;
-			  hour++;
-		  }
-
-		  if(hour >= 24){
-			  hour = 0;
-		  }
-		  updateClockBuffer();
-
-		  // represent four 7seg led
-		  if(index_led >= MAX_LED) index_led = 0;
-		  update7SEG(index_led++);
-
-		  // toggle dot led
-		  HAL_GPIO_TogglePin(DOT_GPIO_Port, DOT_Pin);
-		  HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, SET);
-		  HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, SET);
-		  HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, SET);
-		  HAL_GPIO_WritePin(ENM3_GPIO_Port, ENM3_Pin, SET);
-		  HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, SET);
-		  HAL_GPIO_WritePin(ENM7_GPIO_Port, ENM7_Pin, SET);
-		  HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW0_Pin, SET);
-	  }
+		  // show led matrix
+		  if(index_led_matrix >= 8) index_led_matrix = 0;
+		  updateLEDMatrix(index_led_matrix++);
+		  HAL_Delay(10);
+	  //}
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -336,7 +359,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, ENM0_Pin|ENM1_Pin|DOT_Pin|EN0_Pin
                           |EN1_Pin|EN2_Pin|EN3_Pin|ENM2_Pin
                           |ENM3_Pin|ENM4_Pin|ENM5_Pin|ENM6_Pin
-                          |ENM7_Pin, GPIO_PIN_RESET);
+                          |ENM7_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, a_Pin|b_Pin|c_Pin|ROW2_Pin
@@ -374,6 +397,7 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+// define update7SEG function
 void update7SEG(int index){
 	switch(index){
 	case 0:
@@ -409,6 +433,8 @@ void update7SEG(int index){
 	}
 }
 
+
+// define update clock buffer
 void updateClockBuffer(){
 	led_buffer[0] = hour / 10;
 	led_buffer[1] = hour % 10;
@@ -416,7 +442,84 @@ void updateClockBuffer(){
 	led_buffer[3] = minute % 10;
 }
 
-// index_led = enable
+// define Init binary array function
+void InitbinaryArr(){
+	int col = 8, row = 9;
+	for(int i = 0; i < col; i++){
+		for(int j = 0; j < row; j ++){
+			binaryArr[i][j] = 0;
+		}
+	}
+}
+
+// define toBinary function
+void toBinary(uint8_t value, int col){
+	int size = 8;
+	for(int i = size - 1; i >= 0 ; i--){
+		binaryArr[col][size - 1 - i] = (value >> i) & 1;
+	}
+}
+
+// define set Led Matrix function
+// exactly set row led
+void setLedMatrix(int col){
+	HAL_GPIO_WritePin(ROW0_GPIO_Port, ROW0_Pin, binaryArr[col][0]);
+	HAL_GPIO_WritePin(ROW1_GPIO_Port, ROW1_Pin, binaryArr[col][1]);
+	HAL_GPIO_WritePin(ROW2_GPIO_Port, ROW2_Pin, binaryArr[col][2]);
+	HAL_GPIO_WritePin(ROW3_GPIO_Port, ROW3_Pin, binaryArr[col][3]);
+	HAL_GPIO_WritePin(ROW4_GPIO_Port, ROW4_Pin, binaryArr[col][4]);
+	HAL_GPIO_WritePin(ROW5_GPIO_Port, ROW5_Pin, binaryArr[col][5]);
+	HAL_GPIO_WritePin(ROW6_GPIO_Port, ROW6_Pin, binaryArr[col][6]);
+	HAL_GPIO_WritePin(ROW7_GPIO_Port, ROW7_Pin, binaryArr[col][7]);
+}
+
+// define update Matrix led function
+void updateLEDMatrix(int index){
+	switch(index){
+		case 0:
+			HAL_GPIO_WritePin(ENM7_GPIO_Port,ENM7_Pin, SET);
+			HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, RESET);
+			break;
+		case 1:
+			HAL_GPIO_WritePin(ENM0_GPIO_Port, ENM0_Pin, SET);
+			HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, RESET);
+			break;
+		case 2:
+			HAL_GPIO_WritePin(ENM1_GPIO_Port, ENM1_Pin, SET);
+			HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, RESET);
+			break;
+		case 3:
+			HAL_GPIO_WritePin(ENM2_GPIO_Port, ENM2_Pin, SET);
+			HAL_GPIO_WritePin(ENM3_GPIO_Port, ENM3_Pin, RESET);
+			break;
+		case 4:
+			HAL_GPIO_WritePin(ENM3_GPIO_Port, ENM3_Pin, SET);
+			HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, RESET);
+			break;
+		case 5:
+			HAL_GPIO_WritePin(ENM4_GPIO_Port, ENM4_Pin, SET);
+			HAL_GPIO_WritePin(ENM5_GPIO_Port, ENM5_Pin, RESET);
+			break;
+		case 6:
+			HAL_GPIO_WritePin(ENM5_GPIO_Port, ENM5_Pin, SET);
+			HAL_GPIO_WritePin(ENM6_GPIO_Port, ENM6_Pin, RESET);
+			break;
+		case 7:
+			HAL_GPIO_WritePin(ENM6_GPIO_Port, ENM6_Pin, SET);
+			HAL_GPIO_WritePin(ENM7_GPIO_Port, ENM7_Pin, RESET);
+			break;
+		default:
+			break;
+	}
+	// if first time convert to binary --> call binary function
+	if(binaryArr[index][8] == 0){
+		toBinary(matrix_buffer[index], index);
+		// set last bit to 1 --> be saved to Arr, not need reconvert
+		binaryArr[index][8] = 1;
+	}
+	// else call from binaryArr, not need to reconvert to binary
+	setLedMatrix(index);
+}
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	timer_run();
 }
