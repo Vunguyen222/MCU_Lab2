@@ -219,7 +219,7 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
   setTimer0(1000);
   setTimer1(250);
-
+  InitbinaryArr();
   /* USER CODE END 2 */
 
   /* Infinite loop */
