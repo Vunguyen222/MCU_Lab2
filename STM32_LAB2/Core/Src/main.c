@@ -224,7 +224,7 @@ int main(void)
   setTimer0(1000);
   setTimer1(250);
   /* USER CODE END 2 */
-
+  InitbinaryArr();
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
